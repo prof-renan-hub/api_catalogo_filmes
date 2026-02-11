@@ -24,4 +24,4 @@ USER filme
 
 EXPOSE 8080
 
-CMD ["gunicorn", "myapp:app", "--bind", "0.0.0.0:8080"]
+CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:$PORT"]
