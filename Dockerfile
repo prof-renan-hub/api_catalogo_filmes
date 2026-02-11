@@ -1,28 +1,27 @@
-FROM ubuntu:24.04
+FROM python:3.13-slim
 
-ENV TZ=America/Sao_Paulo
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# Variáveis de ambiente
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Criar usuário sem conflito de GID
+# Criar usuário não-root
 RUN useradd -m filme
 
-# Instalar dependências
-RUN apt update && \
-    apt install -y software-properties-common python3 python3-pip gunicorn && \
-    apt clean
-
-RUN pip3 install Flask geojson psycopg2-binary Flask-Cors python-dotenv \
-    pipenv virtualenv virtualenv-clone uwsgi requests
-
+# Diretório da aplicação
 WORKDIR /app
+
+# Copiar dependências primeiro (melhora cache)
+COPY requirements.txt .
+
+# Instalar dependências
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar resto do projeto
 COPY . .
 
-ENV FLASK_ENV=production
-ENV PYTHONUNBUFFERED=1
+# Mudar para usuário não-root
+USER filme
 
 EXPOSE 8080
 
-USER filme
-
 CMD ["gunicorn", "myapp:app", "--bind", "0.0.0.0:8080"]
-
